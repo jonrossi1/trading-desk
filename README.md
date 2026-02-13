@@ -170,6 +170,7 @@ If Git warns that the branch is not fully merged (rare if the PR was merged), yo
 This removes references to remote branches that were deleted on GitHub.
 
 
+
 ### Notes
 Branch protection may not be strictly enforced by GitHub on private repositories.
 These rules are therefore enforced by **team convention** and should be followed consistently.
