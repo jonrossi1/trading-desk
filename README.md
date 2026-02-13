@@ -1,6 +1,6 @@
 # Trading Desk (IBKR / ib_insync)
 
-This repository contains a Python-based trading desk project built on **Interactive Brokers (IBKR)** using `ib_insync`.
+This repository contains a Python-based trading desk project built on the **Interactive Brokers (IBKR)** API broker, using `ib_insync`.
 
 The project is designed for collaborative development where each contributor:
 - runs their own local Trader Workstation (TWS)
