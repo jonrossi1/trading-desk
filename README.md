@@ -18,8 +18,6 @@ Local runtime configuration (ports, client IDs, credentials) is intentionally ke
     git clone https://github.com/<your-username>/trading_desk.git
     cd trading_desk
 
----
-
 ### 2. Create and activate a virtual environment
 
     python3 -m venv .venv
@@ -31,8 +29,6 @@ You only need to create the virtual environment once.
 Each time you reopen a terminal, re-run:
 
     source .venv/bin/activate
-
----
 
 ### 3. Install dependencies
 
@@ -105,12 +101,40 @@ If you are unsure, **do not run in live mode**.
 
 ---
 
-## Collaboration Notes
+## Collaboration Protocol (Important)
 
-- All development happens on feature branches
-- Changes are merged via pull requests
-- Local environment files (`.env`, `.venv`, logs) are not shared
-- Strategy and risk logic should remain deterministic and reviewable
+This repository uses a pull-request–based workflow to reduce the risk of accidental changes to `main`.
+
+### Rules
+- **Do not push directly to `main`.**
+- All changes should be made on a **feature branch** and merged via a **pull request**.
+- **Always pull the latest `main` before starting new work or pushing a branch.**
+- Use **Squash and merge** for PRs unless there is a specific reason not to.
+- Live trading code should never be merged without explicit review and confirmation.
+
+### Typical Flow
+
+1. Pull latest changes:
+
+       git checkout main
+       git pull
+
+2. Create a feature branch:
+
+       git checkout -b feat-example
+
+3. Make changes, commit, and push:
+
+       git push -u origin feat-example
+
+4. Open a pull request and merge via GitHub.
+
+### Branch Naming
+- Use **kebab-case** for branch names (e.g. `feat-risk-limits`, `test-pr-flow`).
+
+### Notes
+Branch protection may not be strictly enforced by GitHub on private repositories.
+These rules are therefore enforced by **team convention** and should be followed consistently.
 
 ---
 
@@ -126,15 +150,6 @@ If you are unsure, **do not run in live mode**.
 
 ---
 
-## Design Notes
-
-This project intentionally separates:
-- shared logic (committed to GitHub)
-- local runtime configuration (via `.env`)
-- execution environment (local TWS per developer)
-
-This keeps collaboration safe, reproducible, and minimizes the risk of accidental live trading.
-
 ## Logging
 
 Runtime logs are written locally to:
@@ -146,6 +161,8 @@ Each developer has their own log files.
 
 If the `logs/` directory or log file does not exist, it will be created automatically at runtime.
 
+---
+
 ## Local-only Files
 
 The following files and directories are intentionally local and not shared:
@@ -156,3 +173,14 @@ The following files and directories are intentionally local and not shared:
 - `__pycache__/`
 
 These are ignored via `.gitignore`.
+
+---
+
+## Design Notes
+
+This project intentionally separates:
+- shared logic (committed to GitHub)
+- local runtime configuration (via `.env`)
+- execution environment (local TWS per developer)
+
+This keeps collaboration safe, reproducible, and minimizes the risk of accidental live trading.
