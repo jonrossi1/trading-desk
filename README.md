@@ -144,6 +144,32 @@ This repository uses a pull-request–based workflow to reduce the risk of accid
 ### Branch Naming
 - Use **kebab-case** for branch names (e.g. `feat-risk-limits`, `test-pr-flow`).
 
+### Deleting branches after merge
+
+After a pull request is merged, the feature branch should be deleted to keep the repository clean.
+
+#### Delete the branch on GitHub
+- When merging a PR, GitHub will prompt you to **Delete branch**
+- This removes the remote branch (e.g. `origin/feat-example`)
+
+#### Delete the branch locally
+After switching back to `main` and pulling the latest changes:
+
+    git checkout main
+    git pull
+    git branch -d feat-example
+
+If Git warns that the branch is not fully merged (rare if the PR was merged), you can force delete:
+
+    git branch -D feat-example
+
+#### Clean up stale remote references (optional)
+
+    git fetch --prune
+
+This removes references to remote branches that were deleted on GitHub.
+
+
 ### Notes
 Branch protection may not be strictly enforced by GitHub on private repositories.
 These rules are therefore enforced by **team convention** and should be followed consistently.
