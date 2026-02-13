@@ -119,15 +119,27 @@ This repository uses a pull-request–based workflow to reduce the risk of accid
        git checkout main
        git pull
 
-2. Create a feature branch:
+2. Create a feature branch (e.g., `feature-example`):
 
-       git checkout -b feat-example
+       git checkout -b feature-example
 
-3. Make changes, commit, and push:
+3. Make changes and commit:
 
-       git push -u origin feat-example
+       git commit -m "Commit message"
 
-4. Open a pull request and merge via GitHub.
+4. Pull latest `main` into your branch **before pushing**!
+
+       git pull origin main
+
+5. Push your branch. When pushing a new branch for the first time (e.g., `feature-example`), use:
+
+       git push -u origin feature-example
+
+6. The `-u` flag sets the upstream tracking relationship so that future pushes can be done with:
+
+       git push
+
+7. Go to GitHub, open a pull request, and merge via GitHub after review.
 
 ### Branch Naming
 - Use **kebab-case** for branch names (e.g. `feat-risk-limits`, `test-pr-flow`).
