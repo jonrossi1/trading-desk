@@ -1,0 +1,13 @@
+app:
+  name: "mvp-trading-desk"
+
+universe:
+  symbols: ["SPY", "QQQ", "IWM"]
+
+risk:
+  max_position_pct: 0.20
+  max_gross_exposure: 1.00
+  max_drawdown_pct: 0.10
+
+strategy:
+  name: "noop"

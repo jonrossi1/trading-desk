@@ -1,0 +1,3 @@
+ib-insync
+PyYAML
+python-dotenv
