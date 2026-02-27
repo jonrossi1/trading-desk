@@ -9,6 +9,8 @@ from scripts.risk_smoke import run_risk_smoke_tests
 from broker_ibkr import IBKRBrokerReadOnly
 from logging_setup import setup_logging
 from dotenv import load_dotenv
+from backtest import run_ibkr_reversal_backtest
+from datetime import datetime
 load_dotenv()
 
 TWS_PAPER_PORT = int(os.getenv("IBKR_PAPER_PORT", "7497"))
@@ -62,6 +64,34 @@ def parse_args():
             f"IBKR API port "
             f"(paper: {TWS_PAPER_PORT}, live: {TWS_LIVE_PORT})"
         ),
+    )
+
+    parser.add_argument(
+        "--run",
+        choices=["trade", "backtest"],
+        default="trade",
+        help="Run mode: trade (default) or backtest (historical simulation).",
+    )
+
+    parser.add_argument(
+        "--duration",
+        default="2 Y"
+    )
+
+    parser.add_argument(
+        "--bar-size",
+        default="1 day"
+    )
+
+    parser.add_argument(
+        "--cost-bps",
+        type=float,
+        default=5.0
+    )
+
+    parser.add_argument(
+        "--out",
+        default="outputs/backtest.csv"
     )
 
     return parser.parse_args()
@@ -150,6 +180,35 @@ def main():
         else:
             for p in positions:
                 log.info(f"{p['symbol']}: {p['position']} @ {p['avg_cost']}")
+
+        # Backtest mode: run historical simulation and exit early
+        if args.run == "backtest":
+            if not broker:
+                log.error("Backtest mode requires --ibkr (IBKR connection) to fetch historical data.")
+                sys.exit(2)
+
+            # For now, keep the universe small to avoid IBKR pacing limits
+            bt_symbols = symbols[:3]
+
+            # Backtest output
+            out_path = args.out
+            if out_path == "outputs/backtest.csv":  # default
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                base, ext = os.path.splitext(out_path)
+                out_path = f"{base}_{ts}{ext}"
+
+            run_ibkr_reversal_backtest(
+                broker=broker,
+                symbols=bt_symbols,
+                duration=args.duration,
+                bar_size=args.bar_size,
+                cost_bps=args.cost_bps,
+                out_csv=out_path,
+                log=log,
+            )
+
+            log.info("Backtest complete. Exiting.")
+            return
 
     # Load trading strategy (weights)
     targets = target_weights(strategy_name, symbols)
