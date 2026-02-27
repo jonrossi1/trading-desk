@@ -3,6 +3,7 @@
 
 # logs + runtime artifacts
 logs/
+outputs/
 *.sqlite
 
 # python cache

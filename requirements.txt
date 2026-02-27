@@ -1,3 +1,5 @@
 ib-insync
 PyYAML
 python-dotenv
+numpy
+pandas
