@@ -64,6 +64,34 @@ def parse_args():
         ),
     )
 
+    parser.add_argument(
+        "--run",
+        choices=["trade", "backtest"],
+        default="trade",
+        help="Run mode: trade (default) or backtest (historical simulation).",
+    )
+
+    parser.add_argument(
+        "--duration",
+        default="2 Y"
+    )
+
+    parser.add_argument(
+        "--bar-size",
+        default="1 day"
+    )
+
+    parser.add_argument(
+        "--cost-bps",
+        type=float,
+        default=5.0
+    )
+
+    parser.add_argument(
+        "--out",
+        default="outputs/backtest.csv"
+    )
+
     return parser.parse_args()
 
 def enforce_ibkr_safety(mode: str, ibkr_port: int, understand_live: bool, log: logging.Logger) -> None:

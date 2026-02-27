@@ -142,7 +142,7 @@ This repository uses a pull-request–based workflow to reduce the risk of accid
 7. Go to GitHub, open a pull request, and merge via GitHub after review.
 
 ### Branch Naming
-- Use **kebab-case** for branch names (e.g. `feat-risk-limits`, `test-pr-flow`).
+- Use **kebab-case** for branch names (e.g. `feature-risk-limits`, `test-pr-flow`).
 
 ### Deleting branches after merge
 
