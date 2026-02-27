@@ -179,13 +179,75 @@ These rules are therefore enforced by **team convention** and should be followed
 
 ## Repository Structure (High Level)
 
-    trade.py              # CLI entrypoint
-    broker_ibkr.py        # IBKR connection wrapper
+    trade.py              # CLI entrypoint (trading + backtesting)
+    broker_ibkr.py        # IBKR connection + historical data wrapper
+    backtest.py           # Historical simulation engine
     config_loader.py      # YAML + env config loading
     risk.py               # Risk checks and limits
-    strategy.py           # Strategy logic
+    strategy.py           # Strategy definitions
     configs/              # Shared YAML configs
     scripts/              # Smoke tests and utilities
+    outputs/              # Backtest result CSVs (local only)
+
+---
+
+## Backtesting Mode (Historical Simulation)
+
+In addition to paper/live trading modes, the trading desk supports a **historical backtest mode** using IBKR historical bar data.
+
+Backtest mode allows you to:
+
+- Fetch historical daily bar data directly from IBKR
+- Simulate a trading strategy over a specified duration
+- Model proportional transaction costs
+- Compute performance metrics (Sharpe ratio, max drawdown, total return)
+- Write timestamped output files for reproducibility
+
+### Example: Run a Backtest
+
+    python trade.py --run backtest --mode paper --ibkr --config configs/paper.yaml --duration "1 Y" --bar-size "1 day" --cost-bps 5
+
+### Key Parameters
+
+- `--run backtest`  
+  Switches from trading mode to historical simulation mode.
+
+- `--duration`  
+  Historical lookback window (e.g., `"1 Y"`, `"2 Y"`).
+
+- `--bar-size`  
+  Bar frequency (e.g., `"1 day"`, `"1 hour"`).
+
+- `--cost-bps`  
+  Proportional transaction cost in basis points applied to turnover.
+
+- `--out`  
+  Optional output file path. If not specified, timestamped CSV output is written to:
+  
+      outputs/backtest_<timestamp>.csv
+
+### Output
+
+Each backtest run generates:
+
+- Daily equity curve
+- Signal and turnover information
+- Transaction cost impact
+- Performance summary logged to console
+- CSV output saved to `outputs/`
+
+---
+
+### Architecture Notes (Backtesting)
+
+Backtesting is implemented modularly:
+
+- `broker_ibkr.py` → historical bar data access via IBKR
+- `backtest.py` → simulation engine and performance metrics
+- `strategy.py` → strategy definitions (static and extensible)
+- `trade.py` → CLI orchestration for both trading and backtesting
+
+This design allows strategies to be tested historically and later deployed in paper or live mode with minimal structural changes.
 
 ---
 
