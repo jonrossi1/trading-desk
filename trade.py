@@ -6,10 +6,11 @@ from config_loader import load_config
 from strategy import target_weights
 from risk import validate_targets, print_risk_result
 from scripts.risk_smoke import run_risk_smoke_tests
-from broker_ibkr import IBKRBrokerReadOnly
+from broker_ibkr import IBKRBroker, IBKRBrokerReadOnly
 from logging_setup import setup_logging
 from dotenv import load_dotenv
 from backtest import run_ibkr_reversal_backtest
+from live import run_live
 from datetime import datetime
 load_dotenv()
 
@@ -53,7 +54,7 @@ def parse_args():
     parser.add_argument(
         "--ibkr",
         action="store_true",
-        help="Connect to IBKR (read-only)",
+        help="Connect to IBKR (required for backtest and live modes)",
     )
 
     parser.add_argument(
@@ -68,9 +69,9 @@ def parse_args():
 
     parser.add_argument(
         "--run",
-        choices=["trade", "backtest"],
+        choices=["trade", "backtest", "live"],
         default="trade",
-        help="Run mode: trade (default) or backtest (historical simulation).",
+        help="Run mode: trade (default), backtest, or live (forward-looking paper/live via IBKR).",
     )
 
     parser.add_argument(
@@ -158,12 +159,63 @@ def main():
     ### Run main trading program ###
     ################################
 
-    #IBKR connection and position summary
     broker = None
 
+    # Live mode: use IBKRBroker (writable) with host/port from config
+    if args.run == "live":
+        if not args.ibkr:
+            log.error("Live mode requires --ibkr.")
+            sys.exit(2)
+        ibkr_cfg = cfg.get("ibkr", {})
+        host = os.getenv("IBKR_HOST") or ibkr_cfg.get("host", "127.0.0.1")
+        port = ibkr_cfg.get("port") or args.ibkr_port
+        client_id = int(ibkr_cfg.get("client_id", 1))
+        connect_timeout = float(ibkr_cfg.get("connect_timeout", 30))
+        broker = IBKRBroker(host=host, port=port, client_id=client_id, connect_timeout=connect_timeout)
+        try:
+            broker.connect()
+        except TimeoutError:
+            log.error(
+                f"Connection to TWS/IB Gateway timed out (host={host}, port={port}). "
+                "Check that TWS or IB Gateway is running, API is enabled (Settings → API), "
+                "and the port matches (paper: 7497, live: 7496)."
+            )
+            raise SystemExit(1)
+        log.info(f"\n=== IBKR Live (host={host}, port={port}) ===")
+        log.info(f"Server time: {broker.server_time()}")
+        log.info(f"Dry run: {args.dry_run}")
+        run_live(
+            broker=broker,
+            symbols=symbols,
+            cfg=cfg,
+            cost_bps=args.cost_bps,
+            dry_run=args.dry_run,
+            log=log,
+        )
+        log.info("Live run complete. Exiting.")
+        if broker:
+            try:
+                broker.disconnect()
+            except Exception as e:
+                log.warning(f"Error during broker disconnect: {e}")
+        log.info("Trading desk shutdown complete")
+        return
+
+    # IBKR connection for backtest or trade
     if args.ibkr:
-        broker = IBKRBrokerReadOnly(port=args.ibkr_port)
-        broker.connect()
+        ibkr_cfg = cfg.get("ibkr", {})
+        host = os.getenv("IBKR_HOST") or ibkr_cfg.get("host", "127.0.0.1")
+        connect_timeout = float(ibkr_cfg.get("connect_timeout", 30))
+        broker = IBKRBrokerReadOnly(host=host, port=args.ibkr_port, connect_timeout=connect_timeout)
+        try:
+            broker.connect()
+        except TimeoutError:
+            log.error(
+                f"Connection to TWS/IB Gateway timed out (host={host}, port={args.ibkr_port}). "
+                "Check that TWS or IB Gateway is running, API is enabled (Settings → API), "
+                "and the port matches (paper: 7497, live: 7496)."
+            )
+            raise SystemExit(1)
 
         log.info("\n=== IBKR (read-only) ===")
         log.info(f"Server time: {broker.server_time()}")

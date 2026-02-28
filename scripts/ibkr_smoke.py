@@ -1,16 +1,21 @@
 import asyncio
+import os
+
 asyncio.set_event_loop(asyncio.new_event_loop())
 
+from dotenv import load_dotenv
 from ib_insync import IB
 
-HOST = "127.0.0.1"
+load_dotenv()
+
+HOST = os.environ.get("IBKR_HOST", "127.0.0.1")
 PORT = 7497
 CLIENT_ID = 1
 
 def main() -> None:
     ib = IB()
     print(f"Connecting to TWS at {HOST}:{PORT} ...")
-    ib.connect(HOST, PORT, clientId=CLIENT_ID)
+    ib.connect(HOST, PORT, clientId=CLIENT_ID, timeout=60)
 
     try:
         print("✅ Connected")

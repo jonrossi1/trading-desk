@@ -1,8 +1,17 @@
 app:
   name: "mvp-trading-desk"
 
+# IBKR connection (host/port can be overridden via .env: IBKR_HOST, IBKR_PAPER_PORT)
+ibkr:
+  host: "127.0.0.1"
+  port: 7497
+  client_id: 1
+  connect_timeout: 30     # seconds to wait for TWS/IB Gateway
+  order_type: "market"   # "market" or "limit"
+  fill_timeout_seconds: 60
+
 universe:
-  symbols: ["SPY", "QQQ", "IWM"]
+  symbols: ["SMH", "ARKK", "TAN", "XLE", "XLK", "EEM"] #high volatility ETFs where investor overreacion is high, good for short-term-reversal. 
 
 risk:
   max_position_pct: 0.20

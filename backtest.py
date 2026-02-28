@@ -41,6 +41,19 @@ def max_drawdown(equity_curve: pd.Series) -> float:
 ################################
 ### Backtest core            ###
 ################################
+def latest_reversal_signal(prices: pd.Series) -> float:
+    """
+    Return the latest short-term reversal signal (-1, 0, or 1) given price history.
+    Reuses the same logic as short_term_reversal_backtest: signal_t = -sign(ret_{t-1}).
+    """
+    df = pd.DataFrame({"close": prices}).dropna()
+    if len(df) < 2:
+        return 0.0
+    df["ret"] = df["close"].pct_change()
+    signal = -np.sign(df["ret"].shift(1)).fillna(0.0)
+    return float(signal.iloc[-1])
+
+
 def short_term_reversal_backtest(
     prices: pd.Series,
     cost_bps: float = 5.0,
