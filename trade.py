@@ -240,7 +240,7 @@ def main():
                 sys.exit(2)
 
             # For now, keep the universe small to avoid IBKR pacing limits
-            bt_symbols = symbols[:3]
+            bt_symbols = symbols[:6]
 
             # Backtest output
             out_path = args.out
