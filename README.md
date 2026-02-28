@@ -179,9 +179,10 @@ These rules are therefore enforced by **team convention** and should be followed
 
 ## Repository Structure (High Level)
 
-    trade.py              # CLI entrypoint (trading + backtesting)
-    broker_ibkr.py        # IBKR connection + historical data wrapper
-    backtest.py           # Historical simulation engine
+    trade.py              # CLI entrypoint (trading + backtesting + live)
+    broker_ibkr.py        # IBKR connection + historical data + order placement
+    backtest.py           # Historical simulation engine + reversal signal logic
+    live.py               # Live trading loop (--run live)
     config_loader.py      # YAML + env config loading
     risk.py               # Risk checks and limits
     strategy.py           # Strategy definitions
@@ -251,6 +252,56 @@ This design allows strategies to be tested historically and later deployed in pa
 
 ---
 
+## Live Mode (Forward-Looking Paper/Live via IBKR)
+
+The `--run live` mode runs the short-term reversal strategy on a forward-looking basis, designed to be called once daily (e.g. via Task Scheduler):
+
+1. Connects to TWS/IB Gateway using `configs/paper.yaml` (host/port; env override via `IBKR_HOST`, `IBKR_PAPER_PORT`)
+2. Fetches current portfolio positions from IBKR
+3. Pulls latest ~20 days of daily bars for the universe (same as backtest)
+4. Runs the same reversal signal logic to generate target positions
+5. Compares target vs current positions, computes required trades
+6. Submits orders (market or limit, configurable in YAML) or logs in dry-run
+7. Logs to `logs/live_trades.csv` and `logs/live_portfolio.csv`
+
+### Example: Dry Run (see what it would trade)
+
+    python trade.py --run live --mode paper --ibkr --config configs/paper.yaml --cost-bps 5 --dry-run
+
+### Example: Actual Paper Trading
+
+    python trade.py --run live --mode paper --ibkr --config configs/paper.yaml --cost-bps 5
+
+### Safety
+
+- **Max position size** and **max gross exposure** are configurable in YAML (`risk` section)
+- If an order fails, the error is logged and execution continues with remaining orders
+- Use `--dry-run` to compute signals and log intended trades without placing orders
+
+### Log Files
+
+| File | Columns |
+|------|---------|
+| `logs/live_trades.csv` | timestamp, symbol, side, quantity, fill_price, reference_price, signal_value |
+| `logs/live_portfolio.csv` | timestamp, symbol, position, avg_cost, unrealized_pnl |
+| `logs/live_snapshot.csv` | timestamp, portfolio_value, daily_pnl, running_pnl |
+
+**Raw target weights:** Only symbols with reversal signal = 1 get allocation (long-only). Each long gets `per_name = min(max_gross_exposure / n_longs, max_position_pct)`. Example: 2 longs, `max_gross_exposure=1.0`, `max_position_pct=0.2` → each gets 0.2, total 0.4.
+
+**Share sizing:** `quantity = round((portfolio_value × target_weight) / price)`. `reference_price` is the latest daily close used for sizing; it is logged even when dry-run or unfilled.
+
+**Running P&L:** When there are at least 2 runs, `logs/live_snapshot.csv` records `daily_pnl` (change vs previous run) and `running_pnl` (current portfolio value minus first-run value). Printed to stdout in the live summary.
+
+### IBKR Config (paper.yaml)
+
+    ibkr:
+      host: "127.0.0.1"
+      port: 7497
+      order_type: "market"   # or "limit"
+      fill_timeout_seconds: 60
+
+---
+
 ## Logging
 
 Runtime logs are written locally to:
@@ -270,7 +321,7 @@ The following files and directories are intentionally local and not shared:
 
 - `.env`        (local IBKR and runtime configuration)
 - `.venv/`      (Python virtual environment)
-- `logs/`       (runtime logs)
+- `logs/`       (runtime logs, live_trades.csv, live_portfolio.csv, live_snapshot.csv)
 - `__pycache__/`
 
 These are ignored via `.gitignore`.
